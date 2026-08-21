@@ -10,27 +10,19 @@ workflows:
         PACKAGE_NAME: "br.com.yson.listacompras"
       node: latest
     scripts:
-      - name: Generate missing Gradle wrapper
+      - name: Set up local.properties
         script: |
-          # Encontra onde está a pasta raiz do projeto Android que contém o build.gradle.kts
+          # Encontra onde está o arquivo build.gradle.kts
           BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
-          if [ -z "$BUILD_FILE" ]; then
-            echo "Erro: build.gradle.kts não foi encontrado!"
-            exit 1
-          fi
           PROJECT_DIR=$(dirname "$BUILD_FILE")
-          # Se o build.gradle.kts estiver dentro de uma pasta 'app', sobe um nível para ir à raiz
           if [ "$(basename "$PROJECT_DIR")" = "app" ]; then
             PROJECT_DIR=$(dirname "$PROJECT_DIR")
           fi
           cd "$PROJECT_DIR"
           
-          # Força a geração dos arquivos gradlew e pastas wrapper que estavam vazias
-          gradle wrapper --gradle-version 8.2
-          chmod +x gradlew
-          
-          # Cria o arquivo local.properties exigido pelo Android SDK
+          # Cria o arquivo exigido pelo Android SDK e dá permissão ao executor
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          chmod +x gradlew
       - name: Build Android APK
         script: |
           BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
@@ -40,7 +32,7 @@ workflows:
           fi
           cd "$PROJECT_DIR"
           
-          # Executa a compilação final do aplicativo
+          # Executa a compilação direta usando o arquivo gradlew que você criou
           ./gradlew assembleDebug
     artifacts:
       - "**/build/outputs/apk/**/*.apk"
