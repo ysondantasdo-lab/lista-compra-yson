@@ -1,0 +1,20 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 30
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        - firebase_credentials
+      vars:
+        PACKAGE_NAME: "br.com.yson.listacompras"
+      node: latest
+    scripts:
+      - name: Set up local.properties
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+      - name: Build Android APK
+        script: |
+          ./gradlew assembleDebug
+    artifacts:
+      - app/build/outputs/apk/**/*.apk
