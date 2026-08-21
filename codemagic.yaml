@@ -10,34 +10,12 @@ workflows:
         PACKAGE_NAME: "br.com.yson.listacompras"
       node: latest
     scripts:
-      - name: Set up local.properties and download wrapper jar
+      - name: Configurar e Compilar Projeto
         script: |
-          # Encontra onde está o arquivo build.gradle.kts
-          BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
-          PROJECT_DIR=$(dirname "$BUILD_FILE")
-          if [ "$(basename "$PROJECT_DIR")" = "app" ]; then
-            PROJECT_DIR=$(dirname "$PROJECT_DIR")
-          fi
-          cd "$PROJECT_DIR"
-          
-          # Garante que a pasta wrapper exista no local correto encontrado
-          mkdir -p gradle/wrapper
-          
-          # Baixa o arquivo .jar oficial e limpo diretamente na pasta correta
-          curl -L https://apache.org -o gradle/wrapper/gradle-wrapper.jar
-          
-          # Cria o arquivo exigido pelo Android SDK
+          # Cria as chaves do SDK do Android na máquina virtual
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-      - name: Build Android APK
-        script: |
-          BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
-          PROJECT_DIR=$(dirname "$BUILD_FILE")
-          if [ "$(basename "$PROJECT_DIR")" = "app" ]; then
-            PROJECT_DIR=$(dirname "$PROJECT_DIR")
-          fi
-          cd "$PROJECT_DIR"
           
-          # CORREÇÃO: Executa a compilação chamando o Java diretamente no .jar baixado pelo curl
-          java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug
+          # Compila o seu aplicativo usando o Gradle nativo instalado no próprio servidor
+          gradle assembleDebug
     artifacts:
       - "**/build/outputs/apk/**/*.apk"
