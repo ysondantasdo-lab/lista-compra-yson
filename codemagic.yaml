@@ -10,7 +10,7 @@ workflows:
         PACKAGE_NAME: "br.com.yson.listacompras"
       node: latest
     scripts:
-      - name: Set up local.properties
+      - name: Set up local.properties and download wrapper jar
         script: |
           # Encontra onde está o arquivo build.gradle.kts
           BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
@@ -23,12 +23,11 @@ workflows:
           # Garante que a pasta wrapper exista no local correto encontrado
           mkdir -p gradle/wrapper
           
-          # CORREÇÃO: Baixa o arquivo .jar oficial limpo para substituir o corrompido do upload
+          # Baixa o arquivo .jar oficial e limpo diretamente na pasta correta
           curl -L https://apache.org -o gradle/wrapper/gradle-wrapper.jar
           
-          # Cria o arquivo exigido pelo Android SDK e dá permissão ao executor
+          # Cria o arquivo exigido pelo Android SDK
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          chmod +x gradlew
       - name: Build Android APK
         script: |
           BUILD_FILE=$(find . -name "build.gradle.kts" | head -n 1)
@@ -38,7 +37,7 @@ workflows:
           fi
           cd "$PROJECT_DIR"
           
-          # Executa a compilação direta usando o arquivo gradlew que você criou
-          ./gradlew assembleDebug
+          # CORREÇÃO: Executa a compilação chamando o Java diretamente no .jar baixado pelo curl
+          java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug
     artifacts:
       - "**/build/outputs/apk/**/*.apk"
