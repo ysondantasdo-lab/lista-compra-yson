@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "182387233489",
+    "project_id": "lista-compra-yson",
+    "storage_bucket": "lista-compra-yson.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:182387233489:android:553e7123302892e12e6bf0",
+        "android_client_info": {
+          "package_name": "br.com.yson.listacompras"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBBth4a9oGpB5muMZEinQwd3Bj-TJP4WJ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
