@@ -20,6 +20,12 @@ workflows:
           fi
           cd "$PROJECT_DIR"
           
+          # Garante que a pasta wrapper exista no local correto encontrado
+          mkdir -p gradle/wrapper
+          
+          # CORREÇÃO: Baixa o arquivo .jar oficial limpo para substituir o corrompido do upload
+          curl -L https://apache.org -o gradle/wrapper/gradle-wrapper.jar
+          
           # Cria o arquivo exigido pelo Android SDK e dá permissão ao executor
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
           chmod +x gradlew
