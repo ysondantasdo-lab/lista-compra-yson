@@ -2,7 +2,7 @@ package br.com.yson.listacompras
 
 import android.app.Application
 
-import androidx.lifecycle.ViewModel
+
 
 import androidx.lifecycle.AndroidViewModel
 
@@ -87,7 +87,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
                     }
                     .addOnFailureListener { e -> onFailure(e) }
             }
-        }
+        
     }
 
 
@@ -110,8 +110,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             }
             .addOnFailureListener { e -> onFailure(e) }
     }
-}
-}
+
 
 
     private fun escutarMudancas(idCasal: String) {
@@ -139,7 +138,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
-}
+
 
     fun adicionarItem(nome: String) {
         val idCasal = idCasalLogado ?: return
@@ -179,6 +178,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         escutaItensListener?.remove()
         escutaItensConhecidosListener?.remove()
     }
+}
 
 
 
