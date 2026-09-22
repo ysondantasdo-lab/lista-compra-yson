@@ -13,9 +13,12 @@ workflows:
     scripts:
       - name: Configurar e Compilar Projeto
         script: |
-          # Cria as chaves do SDK do Android na máquina virtual
+          # Transforma o texto Base64 de volta no arquivo de chave físico
+          echo $CM_KEYSTORE | base64 --decode > /tmp/lista_compras.jks
+          export CM_KEYSTORE_PATH="/tmp/lista_compras.jks"
+
+          # Configura o SDK e compila o pacote .aab da loja
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          # Compila o seu aplicativo gerando o pacote otimizado para a Play Store
           ./gradlew bundleRelease
     artifacts:
       - "**/build/outputs/bundle/**/*.aab"
