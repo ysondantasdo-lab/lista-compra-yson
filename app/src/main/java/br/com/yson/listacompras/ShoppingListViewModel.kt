@@ -87,6 +87,8 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
                     }
                     .addOnFailureListener { e -> onFailure(e) }
             }
+        }
+    }
 
 
     /**
@@ -108,6 +110,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             }
             .addOnFailureListener { e -> onFailure(e) }
     }
+}
 }
 
 
@@ -136,6 +139,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             }
         }
     }
+}
 
     fun adicionarItem(nome: String) {
         val idCasal = idCasalLogado ?: return
@@ -175,5 +179,6 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         escutaItensListener?.remove()
         escutaItensConhecidosListener?.remove()
     }
+
 
 
