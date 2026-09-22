@@ -16,6 +16,32 @@ android {
         versionName = "1.1"
     }
 
+    // ⬇️ TRECHO NOVO 1: Configura a leitura da chave que o Codemagic vai injetar
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("CM_KEYSTORE_PATH")
+            if (!keystorePath.isNullOrEmpty()) {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("CM_KEY_ALIAS")
+                keyPassword = System.getenv("CM_KEY_PASSWORD")
+            }
+        }
+    }
+
+    // ⬇️ TRECHO NOVO 2: Vincula a chave de cima ao empacotamento final da loja
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+
+
     buildFeatures {
         compose = true
     }

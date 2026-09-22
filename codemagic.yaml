@@ -14,8 +14,9 @@ workflows:
         script: |
           # Cria as chaves do SDK do Android na máquina virtual
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          
-          # Compila o seu aplicativo usando o Gradle nativo instalado no próprio servidor
-          gradle assembleDebug
+          # Compila o seu aplicativo gerando o pacote otimizado para a Play Store
+          ./gradlew bundleRelease
     artifacts:
-      - "**/build/outputs/apk/**/*.apk"
+      - "**/build/outputs/bundle/**/*.aab"
+          
+
