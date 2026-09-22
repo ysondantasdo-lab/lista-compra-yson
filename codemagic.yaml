@@ -17,8 +17,11 @@ workflows:
           echo $CM_KEYSTORE | base64 --decode > /tmp/lista_compras.jks
           export CM_KEYSTORE_PATH="/tmp/lista_compras.jks"
 
-          # Configura o SDK e compila o pacote .aab da loja
+          # Configura o SDK e força a permissão de execução do gradlew no servidor
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          chmod +x gradlew # ➕ ADICIONE ESTA LINHA EXATAMENTE AQUI
+
+          # Compila o pacote .aab da loja
           ./gradlew bundleRelease
     artifacts:
       - "**/build/outputs/bundle/**/*.aab"
