@@ -5,7 +5,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       groups:
-        - firebase_credentials
+
         - assinatura
       vars:
         PACKAGE_NAME: "br.com.yson.listacompras"
