@@ -6,6 +6,7 @@ workflows:
     environment:
       groups:
         - firebase_credentials
+        - assinatura
       vars:
         PACKAGE_NAME: "br.com.yson.listacompras"
       node: latest
