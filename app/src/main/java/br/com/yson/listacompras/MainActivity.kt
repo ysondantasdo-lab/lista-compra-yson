@@ -234,6 +234,7 @@ fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(CorFundo)
+            .imePadding()
             .padding(16.dp)
     ) {
         
