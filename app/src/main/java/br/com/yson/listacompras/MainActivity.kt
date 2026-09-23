@@ -211,6 +211,7 @@ fun LoginScreen(onLoginSucesso: () -> Unit) {
 fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
     val itens by viewModel.itens.collectAsState()
     val itensConhecidos by viewModel.itensConhecidos.collectAsState()
+    val idCasal by viewModel.idCasal.collectAsState()
 
     var textoAtual by remember { mutableStateOf("") }
 
@@ -241,8 +242,14 @@ fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
         // Topo com botão de Sair (Logout)
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Text(
+                text = "Código do Casal: $idCasal",
+                fontSize = 14.sp,
+                color = CorTexto
+            )
             Text(
                 text = "Sair do App",
                 color = CorLixeira,
