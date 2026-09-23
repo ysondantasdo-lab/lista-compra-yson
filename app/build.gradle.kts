@@ -12,8 +12,8 @@ android {
         applicationId = "br.com.yson.listacompras"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     // ⬇️ TRECHO NOVO 1: Configura a leitura da chave que o Codemagic vai injetar
