@@ -43,6 +43,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
                 val idCasal = document.getString("id_casal")
                 if (idCasal != null) {
                     idCasalLogado = idCasal
+                    _idCasal.value = idCasal
                     escutarMudancas(idCasal)
                 } else {
                     Log.e("ShoppingViewModel", "Usuário não possui ID de casal associado.")
@@ -65,6 +66,12 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
 
     private val _itensConhecidos = MutableStateFlow<List<String>>(emptyList())
     val itensConhecidos: StateFlow<List<String>> = _itensConhecidos
+
+    private val _itensConhecidos = MutableStateFlow<List<String>>(emptyList())
+    val itensConhecidos: StateFlow<List<String>> = _itensConhecidos
+
+    private val _idCasal = MutableStateFlow("")
+    val idCasal: StateFlow<String> = _idCasal
 
 
     /**
