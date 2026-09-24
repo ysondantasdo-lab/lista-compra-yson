@@ -23,17 +23,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-import com.google.firebase.auth.FirebaseAuth
-
 import androidx.compose.ui.platform.LocalContext
 import android.widget.Toast
-
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
 
@@ -43,19 +39,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                                // Estado que controla se o usuário está logado ou não
-                var usuarioLogado by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser != null) }
+                // Como não guardamos mais qual UID pertence a qual casal,
+                // sempre começamos pela tela de senha (mais simples e confiável).
+                var casalAtivo by remember { mutableStateOf(false) }
 
-                if (usuarioLogado) {
-                    // Se estiver logado, monitora o ID do casal e exibe a lista de compras
-                    LaunchedEffect(Unit) {
-                        viewModel.inicializarEscutaDoCasal()
-                    }
+                if (casalAtivo) {
                     ShoppingListScreen(viewModel)
                 } else {
-                    // Se não estiver logado, exibe a tela para Entrar/Cadastrar
                     LoginScreen(
-                        onLoginSucesso = { usuarioLogado = true }
+                        viewModel = viewModel,
+                        onEntrouComSucesso = { casalAtivo = true }
                     )
                 }
             }
@@ -69,31 +62,72 @@ private val CorTexto = Color.Black
 private val CorBotaoAdicionar = Color(0xFF0057B8)
 private val CorLixeira = Color(0xFFD32F2F)
 private val CorSugestaoFundo = Color(0xFFEFEFEF)
-
-
+private val CorErro = Color(0xFFD32F2F)
 
 @Composable
-fun LoginScreen(onLoginSucesso: () -> Unit) {
+fun LoginScreen(viewModel: ShoppingListViewModel, onEntrouComSucesso: () -> Unit) {
     val context = LocalContext.current
-    var email by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
-    var codigoCasal by remember { mutableStateOf("") }
-    
-    // Controla se está na aba de "Entrar" ou de "Criar Conta"
-    var criandoConta by remember { mutableStateOf(false) } 
-    // Controla se vai entrar em um grupo existente ou criar um novo no cadastro
-    var entrarEmGrupoExistente by remember { mutableStateOf(true) }
+    var criandoNovoCodigo by remember { mutableStateOf(false) }
+    var carregando by remember { mutableStateOf(false) }
+    var mensagemErro by remember { mutableStateOf<String?>(null) }
+
+    fun confirmar() {
+        if (senha.isBlank()) {
+            mensagemErro = "Digite uma senha"
+            return
+        }
+        mensagemErro = null
+        carregando = true
+
+        if (criandoNovoCodigo) {
+            viewModel.criarNovoCasal(
+                senha = senha,
+                onSuccess = {
+                    carregando = false
+                    Toast.makeText(context, "Código criado! Guarde a senha: $senha", Toast.LENGTH_LONG).show()
+                    onEntrouComSucesso()
+                },
+                onSenhaJaExiste = {
+                    carregando = false
+                    mensagemErro = "Essa senha já está em uso. Escolha outra."
+                },
+                onFailure = { e ->
+                    carregando = false
+                    mensagemErro = "Erro: ${e.message}"
+                }
+            )
+        } else {
+            viewModel.entrarEmCasalExistente(
+                senha = senha,
+                onSuccess = {
+                    carregando = false
+                    onEntrouComSucesso()
+                },
+                onNaoEncontrado = {
+                    carregando = false
+                    mensagemErro = "Senha não encontrada. Verifique ou crie um novo código."
+                },
+                onFailure = { e ->
+                    carregando = false
+                    mensagemErro = "Erro: ${e.message}"
+                }
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(CorFundo)
+            .navigationBarsPadding()
+            .imePadding()
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = if (criandoConta) "Criar Conta do Casal" else "Entrar na Lista",
+            text = if (criandoNovoCodigo) "Criar Novo Código" else "Entrar na Lista",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = CorTexto,
@@ -101,111 +135,51 @@ fun LoginScreen(onLoginSucesso: () -> Unit) {
         )
 
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("E-mail") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        OutlinedTextField(
             value = senha,
-            onValueChange = { senha = it },
-            label = { Text("Senha") },
+            onValueChange = { senha = it; mensagemErro = null },
+            label = { Text(if (criandoNovoCodigo) "Crie uma senha para o casal" else "Senha do casal") },
             visualTransformation = PasswordVisualTransformation(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { confirmar() }),
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Opções extras que só aparecem se ele estiver criando uma conta nova
-        if (criandoConta) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = entrarEmGrupoExistente, onClick = { entrarEmGrupoExistente = true })
-                Text("Tenho o código do meu parceiro", color = CorTexto)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = !entrarEmGrupoExistente, onClick = { entrarEmGrupoExistente = false })
-                Text("Criar um novo código para nós", color = CorTexto)
-            }
-
-            if (entrarEmGrupoExistente) {
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = codigoCasal,
-                    onValueChange = { codigoCasal = it.uppercase() },
-                    label = { Text("Código do Casal (Ex: CASAL-ABCD)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        if (mensagemErro != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = mensagemErro ?: "", color = CorErro, fontSize = 14.sp)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = {
-                if (email.isBlank() || senha.isBlank()) {
-                    Toast.makeText(context, "Preencha todos os campos", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                if (criandoConta) {
-                    // Lógica para cadastrar nova conta
-                    val auth = FirebaseAuth.getInstance()
-                    auth.createUserWithEmailAndPassword(email, senha)
-                        .addOnSuccessListener { authResult ->
-                            val uid = authResult.user?.uid ?: return@addOnSuccessListener
-                            
-                            // Define o ID do casal (ou gera um novo ou usa o digitado)
-                            val idFinalCasal = if (entrarEmGrupoExistente) {
-                                codigoCasal
-                            } else {
-                                "CASAL-" + java.util.UUID.randomUUID().toString().substring(0, 4).uppercase()
-                            }
-
-                            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                            val dadosUsuario = hashMapOf("uid" to uid, "email" to email, "id_casal" to idFinalCasal)
-                            
-                            db.collection("usuarios").document(uid).set(dadosUsuario)
-                                .addOnSuccessListener {
-                                    Toast.makeText(context, "Conta criada! Seu código é: $idFinalCasal", Toast.LENGTH_LONG).show()
-                                    onLoginSucesso()
-                                }
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(context, "Erro: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                } else {
-                    // Lógica para fazer Login em conta existente
-                    FirebaseAuth.getInstance().signInWithEmailAndPassword(email, senha)
-                        .addOnSuccessListener {
-                            onLoginSucesso()
-                        }
-                        .addOnFailureListener { e ->
-                            Toast.makeText(context, "Erro ao entrar: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
-                }
-            },
+            onClick = { confirmar() },
+            enabled = !carregando,
             colors = ButtonDefaults.buttonColors(containerColor = CorBotaoAdicionar),
             modifier = Modifier.fillMaxWidth().height(50.dp)
         ) {
-            Text(if (criandoConta) "Cadastrar" else "Entrar", fontSize = 18.sp, color = Color.White)
+            Text(
+                text = if (carregando) "Aguarde..." else if (criandoNovoCodigo) "Criar" else "Entrar",
+                fontSize = 18.sp,
+                color = Color.White
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = if (criandoConta) "Já tem conta? Entre por aqui" else "Não tem conta? Cadastre-se aqui",
+            text = if (criandoNovoCodigo) "Já tenho uma senha, quero entrar" else "Quero criar um novo código para nós",
             color = CorBotaoAdicionar,
             fontSize = 16.sp,
             modifier = Modifier
-                .clickable { criandoConta = !criandoConta }
+                .clickable {
+                    criandoNovoCodigo = !criandoNovoCodigo
+                    mensagemErro = null
+                }
                 .padding(8.dp)
         )
     }
 }
-
 
 @Composable
 fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
@@ -235,20 +209,24 @@ fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
         modifier = Modifier
             .fillMaxSize()
             .background(CorFundo)
+            .navigationBarsPadding()
             .imePadding()
             .padding(16.dp)
     ) {
-        
-        // Topo com botão de Sair (Logout)
+
+        // Topo: código do casal (à esquerda, com espaço garantido) e botão de Sair.
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Código do Casal: $idCasal",
+                text = if (idCasal.isBlank()) "Carregando código..." else "Código do Casal: $idCasal",
                 fontSize = 14.sp,
-                color = CorTexto
+                color = CorTexto,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
             Text(
                 text = "Sair do App",
@@ -257,16 +235,14 @@ fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
                     .clickable {
                         FirebaseAuth.getInstance().signOut()
                         val context = viewModel.getApplication<android.app.Application>().applicationContext
-                        // Recarrega a atividade para voltar para a tela de Login
                         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-                            
                         intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
                         context.startActivity(intent)
                     }
-                            .padding(8.dp)
-                            )
-                            }
-       
+                    .padding(start = 8.dp)
+            )
+        }
+
         // Lista numerada dos itens já lançados.
         LazyColumn(modifier = Modifier.weight(1f)) {
             itemsIndexed(itens, key = { _, item -> item.id }) { index, item ->
