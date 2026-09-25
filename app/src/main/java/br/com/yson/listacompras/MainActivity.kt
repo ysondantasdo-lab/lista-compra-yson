@@ -53,7 +53,14 @@ class MainActivity : ComponentActivity() {
             var casalAtivo by remember { mutableStateOf(jaLogouAntes && usuarioFirebaseExiste) }
 
             if (casalAtivo) {
-                ShoppingListScreen(viewModel)
+                ShoppingListScreen(
+                    viewModel = viewModel,
+                    onSair = {
+                        viewModel.efetuarLogoutCompleto(onLogoutConcluido = {
+                            casalAtivo = false
+                        })
+                    }
+                )
             } else {
                 LoginScreen(
                     viewModel = viewModel,
@@ -67,7 +74,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+}
 
 // Cores com alto contraste, pensadas pra leitura fácil.
 private val CorFundo = Color.White
