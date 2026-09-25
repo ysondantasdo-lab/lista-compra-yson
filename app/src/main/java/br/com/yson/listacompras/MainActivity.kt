@@ -28,33 +28,46 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import android.content.Context
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
+
 
 class MainActivity : ComponentActivity() {
 
     private val viewModel: ShoppingListViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MaterialTheme {
-                // Como não guardamos mais qual UID pertence a qual casal,
-                // sempre começamos pela tela de senha (mais simples e confiável).
-                var casalAtivo by remember { mutableStateOf(false) }
+    super.onCreate(savedInstanceState)
 
-                if (casalAtivo) {
-                    ShoppingListScreen(viewModel)
-                } else {
-                    LoginScreen(
-                        viewModel = viewModel,
-                        onEntrouComSucesso = { casalAtivo = true }
-                    )
-                }
+    // Verifica se o casal já digitou a senha com sucesso alguma vez
+    val sharedPreferences = getSharedPreferences("AppCasalPrefs", Context.MODE_PRIVATE)
+    val jaLogouAntes = sharedPreferences.getBoolean("casal_logado", false)
+
+    // Verifica se o Firebase mantém o login anônimo ativo no celular
+    val usuarioFirebaseExiste = FirebaseAuth.getInstance().currentUser != null
+
+    setContent {
+        MaterialTheme {
+            // O app só pula o login se o casal já logou antes E o usuário do Firebase ainda existe
+            var casalAtivo by remember { mutableStateOf(jaLogouAntes && usuarioFirebaseExiste) }
+
+            if (casalAtivo) {
+                ShoppingListScreen(viewModel)
+            } else {
+                LoginScreen(
+                    viewModel = viewModel,
+                    onEntrouComSucesso = {
+                        // Quando o login der certo, salva no celular para não pedir de novo
+                        sharedPreferences.edit().putBoolean("casal_logado", true).apply()
+                        casalAtivo = true 
+                    }
+                )
             }
         }
     }
 }
+
 
 // Cores com alto contraste, pensadas pra leitura fácil.
 private val CorFundo = Color.White
@@ -182,7 +195,10 @@ fun LoginScreen(viewModel: ShoppingListViewModel, onEntrouComSucesso: () -> Unit
 }
 
 @Composable
-fun ShoppingListScreen(viewModel: ShoppingListViewModel) {
+    fun ShoppingListScreen(
+        viewModel: ShoppingListViewModel,
+        onSair: () -> Unit
+    ) {
     val itens by viewModel.itens.collectAsState()
     val itensConhecidos by viewModel.itensConhecidos.collectAsState()
     val idCasal by viewModel.idCasal.collectAsState()

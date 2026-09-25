@@ -1,6 +1,7 @@
 package br.com.yson.listacompras
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -26,6 +27,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
 
     // A "senha" digitada pelo usuário É o código do casal (mais simples: um só campo).
     private var idCasalLogado: String? = null
+    private val sharedPrefs = application.getSharedPreferences("AppCasalPrefs", Context.MODE_PRIVATE)
 
     private var escutaItensListener: ListenerRegistration? = null
     private var escutaItensConhecidosListener: ListenerRegistration? = null
@@ -38,6 +40,17 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
 
     private val _idCasal = MutableStateFlow("")
     val idCasal: StateFlow<String> = _idCasal
+    
+
+    init {
+        val idSalvo = sharedPrefs.getString("id_casal_logado", null)
+        if (idSalvo != null && auth.currentUser != null) {
+            entrarNoCasal(idSalvo)
+        }
+    }
+
+
+
 
     /**
      * Cria um novo casal com a senha/código informado.
@@ -112,9 +125,22 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
             .addOnFailureListener { e -> onResult(e) }
     }
 
+    fun efetuarLogoutCompleto(onLogoutConcluido: () -> Unit) {
+        escutaItensListener?.remove()
+        escutaItensConhecidosListener?.remove()
+        auth.signOut()
+        sharedPrefs.edit().clear().apply() // Limpa todos os dados salvos localmente
+        idCasalLogado = null
+        _idCasal.value = ""
+        _itens.value = emptyList()
+        onLogoutConcluido()
+    }
+
+
     private fun entrarNoCasal(senha: String) {
         idCasalLogado = senha
         _idCasal.value = senha
+        sharedPrefs.edit().putString("id_casal_logado", senha).apply()
         escutarMudancas(senha)
     }
 
@@ -135,7 +161,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
                 if (snapshot != null) {
                     _itens.value = snapshot.documents.mapNotNull { documento ->
                         documento.toObject(ShoppingItem::class.java)?.copy(id = documento.id)
-                    }
+                    }.sortedBy { it.nome } // Garante a ordem alfabética localmente
                 }
             }
 
