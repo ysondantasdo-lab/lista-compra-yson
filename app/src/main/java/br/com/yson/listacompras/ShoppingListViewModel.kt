@@ -10,6 +10,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.text.Collator
+import java.util.Locale
 
 /**
  * Toda a lógica do app fica aqui: login anônimo (só pra satisfazer as regras
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
  * já conhecidos (autocompletar).
  */
 class ShoppingListViewModel(application: Application) : AndroidViewModel(application) {
+    private val collator = Collator.getInstance(Locale("pt", "BR"))
 
     private val auth = FirebaseAuth.getInstance()
     private val db = FirebaseFirestore.getInstance()
@@ -152,7 +155,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
         escutaItensListener = db.collection("listas_compras")
             .document(idCasal)
             .collection("itens")
-            .orderBy("ordem")
+            
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     Log.e("ShoppingViewModel", "Erro ao escutar itens: ${e.message}")
@@ -161,7 +164,7 @@ class ShoppingListViewModel(application: Application) : AndroidViewModel(applica
                 if (snapshot != null) {
                     _itens.value = snapshot.documents.mapNotNull { documento ->
                         documento.toObject(ShoppingItem::class.java)?.copy(id = documento.id)
-                    }.sortedBy { it.nome } // Garante a ordem alfabética localmente
+                    }.sortedWith { a, b -> collator.compare(a.nome, b.nome) } // Garante a ordem alfabética localmente
                 }
             }
 
